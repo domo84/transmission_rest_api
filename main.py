@@ -3,6 +3,7 @@ import json
 import urllib2
 import base64
 import time
+import yaml
 
 xTransmissionSessionId = None
 
@@ -23,23 +24,20 @@ torrent_fields = [
     "uploadRatio"
 ]
 
-with open("config.json") as data:
-    load = json.load(data)
-    url = load["url"]
-    user = load["user"]
-    pw = load["pw"]
+with open("config.yaml") as data:
+    config = yaml.load(data)
 
 class Transmission():
     def post(self, data):
-        global xTransmissionSessionId, url, user, pw
+        global xTransmissionSessionId
 
-        base64string = base64.encodestring('%s:%s' % (user, pw)).replace('\n', '')
+        base64string = base64.encodestring('%s:%s' % (config["rpc"]["user"], config["rpc"]["pw"])).replace('\n', '')
         headers = {
             "X-Transmission-Session-Id": xTransmissionSessionId,
             "Authorization": "Basic %s" % base64string
         }
 
-        req = urllib2.Request(url, json.dumps(data), headers)
+        req = urllib2.Request(config["rpc"]["url"], json.dumps(data), headers)
         retry = False
         res = None
 
@@ -218,7 +216,7 @@ app = webapp2.WSGIApplication([
 
 def main():
     from paste import httpserver
-    httpserver.serve(app, host='0.0.0.0', port='8111')
+    httpserver.serve(app, host=config["server"]["ip"], port=config["server"]["port"])
 
 if __name__ == '__main__':
     main()
